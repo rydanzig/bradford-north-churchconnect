@@ -6,7 +6,7 @@
 </script>
 
 <template>
-  <div class="toast" id="toast" :class="{ show: toast.show }"">
+  <div class="toast" id="toast" :class="{ show: toast.show, error: toast.isError }">
     {{ toast.message }}
   </div>
   <Topbar />

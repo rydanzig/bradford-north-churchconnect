@@ -1,186 +1,18 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
-import { useToastStore } from '@/stores/toast'
-const toast = useToastStore();
+import { useRegisterForm } from '@/composables/useRegisterForm'
 
-const formSubmitted = ref(false);
-const civilStatusError = ref(false);
-
-// Get current date in YYYY-MM-DD format
-const currentDate = computed(() => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-});
-
-// ── SPIN WHEEL ─────────────────────────────────────────────
-const wheelPrizes = [
-  { label: 'Notebook', emoji: '📓', color: '#4a9fc7' },
-  { label: 'Pen', emoji: '🖊️', color: '#c9a96e' },
-  { label: 'Pencil', emoji: '✏️', color: '#4caf7d' },
-  { label: 'Bookmark', emoji: '🔖', color: '#9b59b6' },
-  { label: 'Candy', emoji: '🍬', color: '#e05555' },
-  { label: 'Notebook', emoji: '📓', color: '#1a9fc7' },
-  { label: 'Pen', emoji: '🖊️', color: '#e8a030' },
-  { label: 'Candy', emoji: '🍬', color: '#e07755' },
-];
-const NUM = wheelPrizes.length;
-const ARC = (2 * Math.PI) / NUM;
-let wheelAngle = 0;
-let isSpinning = false;
-
-onMounted(() => {
-  // hide the stats, member search and prayer request tabs
-  ['admin-tab-stats', 'admin-tab-search', 'pr-tab-btn'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-})
-
-function drawWheel(angle : number) {
-  const canvas = document.getElementById('wheel-canvas') as HTMLCanvasElement | null
-
-  if (!canvas) return
-
-  const ctx = canvas.getContext('2d');
-  const cx = canvas.width / 2, cy = canvas.height / 2, r = cx - 4;
-
-  if (!ctx) return
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  wheelPrizes.forEach((prize, i) => {
-    const start = angle + i * ARC;
-    const end = start + ARC;
-    // Slice
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, start, end);
-    ctx.closePath();
-    ctx.fillStyle = prize.color;
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Emoji + label
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(start + ARC / 2);
-    ctx.textAlign = 'right';
-    // emoji
-    ctx.font = '22px serif';
-    ctx.fillStyle = '#fff';
-    ctx.fillText(prize.emoji, r - 10, 7);
-    // label
-    ctx.font = 'bold 11px Lato, sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    ctx.fillText(prize.label, r - 36, 7);
-    ctx.restore();
-  });
-}
-
-function captureAndShowWheel(event: Event) {
-  formSubmitted.value = true;
-  
-  const formElement = event.target as HTMLFormElement;
-  
-  // Custom validation for radio buttons
-  const civilStatusRadios = formElement.querySelectorAll('input[name="civil-status"]');
-  const civilStatusChecked = Array.from(civilStatusRadios).some((radio: any) => radio.checked);
-  
-  if (!civilStatusChecked) {
-    civilStatusError.value = true;
-    return;
-  }
-  
-  civilStatusError.value = false;
-  
-  if (!formElement.checkValidity()) {
-    return; // Let browser handle validation
-  }
-
-  const form = document.getElementById('capture-form-card') as HTMLElement | null
-
-  if (form) {
-    form.style.transition = 'opacity 0.4s ease'
-    form.style.opacity = '0'
-
-    setTimeout(() => {
-      form.style.display = 'none'
-    }, 400)
-  }
-
-  const ws = document.getElementById('wheel-section') as HTMLElement | null
-
-  setTimeout(() => {
-    if (!ws) return
-
-    ws.style.display = 'block'
-    ws.scrollIntoView({ behavior: 'smooth', block: 'center' })
-
-    drawWheel(wheelAngle)
-  }, 450)
-
-  toast.showToast('Visitor captured! Spin to win your gift 🎉')
-}
-
-function toggleSocialField(fieldId: string, event: Event) {
-  const checkbox = event.target as HTMLInputElement
-
-  const field = document.getElementById(fieldId) as HTMLInputElement | null
-  if (!field) return
-
-  if (checkbox.checked) {
-    field.classList.add('visible')
-    field.required = true
-    field.focus()
-  } else {
-    field.classList.remove('visible')
-    field.required = false
-    field.value = ''
-  }
-}
-
-function handleVisitDetails(event: Event) {
-  const sel = event.target as HTMLSelectElement
-  const cityField = document.getElementById('visit-city-field') as HTMLInputElement | null
-  const churchField = document.getElementById('visit-church-field') as HTMLInputElement | null
-
-  cityField?.classList.remove('visible')
-  churchField?.classList.remove('visible')
-  
-  if (cityField) cityField.required = false
-  if (churchField) churchField.required = false
-
-  if (sel.value === 'another-place') {
-    cityField?.classList.add('visible')
-    if (cityField) cityField.required = true
-  }
-
-  if (sel.value === 'another-church') {
-    churchField?.classList.add('visible')
-    if (churchField) churchField.required = true
-  }
-}
-
-function handleSocialInput(event: Event, platform: string) {
-  const input = event.target as HTMLInputElement;
-  let value = input.value.trim();
-  
-  // For Instagram and TikTok, remove @ if user types it at the beginning
-  if (platform !== 'facebook' && value.startsWith('@')) {
-    value = value.substring(1);
-    input.value = value;
-  }
-  // Facebook accepts everything as-is (URLs, @handles, plain names)
-}
-
-function clear() {
-  // TODO:
-}
+const {
+  formSubmitted,
+  civilStatusError,
+  ministryInterestError,
+  currentDate,
+  captureAndShowWheel,
+  toggleSocialField,
+  handleVisitDetails,
+  handleSocialInput,
+  toggleMinistrySection,
+  clear
+} = useRegisterForm()
 </script>
 <template>
   <div class="page active" id="page-admin">
@@ -210,7 +42,7 @@ function clear() {
             <!-- Contact -->
             <div class="form-group form-full">
               <label>Phone Number</label>
-              <input type="tel" placeholder="(555) 000-0000" />
+              <input type="tel" placeholder="09XXXXXXXXX (11 digits)" />
             </div>
             <div class="form-group form-full">
               <label>Email Address</label>
@@ -283,7 +115,7 @@ function clear() {
             <!-- How did you hear -->
             <div class="form-group">
               <label>How did you hear about us? <span class="required">*</span></label>
-              <select required>
+              <select required id="heard_about_us">
                 <option value="">Select...</option>
                 <option>Friend / Family</option>
                 <option>Social Media</option>
@@ -311,7 +143,7 @@ function clear() {
                   More
                   About Christianity</label>
                 <label class="checkbox-item" id="interest-ministry-chk">
-                  <input type="checkbox" value="Serving in Ministry" onchange="toggleMinistrySection(this)" />
+                  <input type="checkbox" value="Serving in Ministry" @change="toggleMinistrySection(($event.target as HTMLInputElement))" />
                   🙌 Serving in Ministry
                 </label>
                 <label class="checkbox-item"><input type="checkbox" value="Becoming a Member" /> 🏛️ Becoming a
@@ -335,14 +167,15 @@ function clear() {
 
             <!-- Ministry Interest (hidden until Serving in Ministry is checked) -->
             <div class="form-group form-full" id="ministry-interest-section">
-              <label>Ministry Interest</label>
+              <label>Ministry Interest <span class="required">*</span></label>
               <div class="checkbox-list" style="margin-top: 6px">
-                <label class="checkbox-item"><input type="checkbox" /> 👶 Children's Ministry</label>
-                <label class="checkbox-item"><input type="checkbox" /> 🧑 Youth Ministry</label>
-                <label class="checkbox-item"><input type="checkbox" /> 🎵 Worship / Choir</label>
-                <label class="checkbox-item"><input type="checkbox" /> 🤲 Community Outreach</label>
-                <label class="checkbox-item"><input type="checkbox" /> 👥 Men's / Women's Group</label>
+                <label class="checkbox-item"><input type="checkbox" @change="ministryInterestError = false" /> 👶 Children's Ministry</label>
+                <label class="checkbox-item"><input type="checkbox" @change="ministryInterestError = false" /> 🧑 Youth Ministry</label>
+                <label class="checkbox-item"><input type="checkbox" @change="ministryInterestError = false" /> 🎵 Worship / Choir</label>
+                <label class="checkbox-item"><input type="checkbox" @change="ministryInterestError = false" /> 🤲 Community Outreach</label>
+                <label class="checkbox-item"><input type="checkbox" @change="ministryInterestError = false" /> 👥 Men's / Women's Group</label>
               </div>
+              <span v-if="ministryInterestError" class="error-message">Please select at least one ministry interest</span>
             </div>
 
             <!-- Prayer Request -->

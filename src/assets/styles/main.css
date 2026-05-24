@@ -304,6 +304,7 @@
     transform:translateY(80px); opacity:0; transition:all .3s;
   }
   .toast.show { transform:translateY(0); opacity:1; }
+  .toast.error { background:#e74c3c; }
 
   .pr-cat-label {
     display:inline-flex; align-items:center; gap:6px; cursor:pointer;
