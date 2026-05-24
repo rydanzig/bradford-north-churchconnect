@@ -1,7 +1,19 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useToastStore } from '@/stores/toast'
 const toast = useToastStore();
+
+const formSubmitted = ref(false);
+const civilStatusError = ref(false);
+
+// Get current date in YYYY-MM-DD format
+const currentDate = computed(() => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+});
 
 // ── SPIN WHEEL ─────────────────────────────────────────────
 const wheelPrizes = [
@@ -36,7 +48,7 @@ function drawWheel(angle : number) {
   const cx = canvas.width / 2, cy = canvas.height / 2, r = cx - 4;
 
   if (!ctx) return
-  
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   wheelPrizes.forEach((prize, i) => {
@@ -70,7 +82,26 @@ function drawWheel(angle : number) {
   });
 }
 
-function captureAndShowWheel() {
+function captureAndShowWheel(event: Event) {
+  formSubmitted.value = true;
+  
+  const formElement = event.target as HTMLFormElement;
+  
+  // Custom validation for radio buttons
+  const civilStatusRadios = formElement.querySelectorAll('input[name="civil-status"]');
+  const civilStatusChecked = Array.from(civilStatusRadios).some((radio: any) => radio.checked);
+  
+  if (!civilStatusChecked) {
+    civilStatusError.value = true;
+    return;
+  }
+  
+  civilStatusError.value = false;
+  
+  if (!formElement.checkValidity()) {
+    return; // Let browser handle validation
+  }
+
   const form = document.getElementById('capture-form-card') as HTMLElement | null
 
   if (form) {
@@ -96,6 +127,57 @@ function captureAndShowWheel() {
   toast.showToast('Visitor captured! Spin to win your gift 🎉')
 }
 
+function toggleSocialField(fieldId: string, event: Event) {
+  const checkbox = event.target as HTMLInputElement
+
+  const field = document.getElementById(fieldId) as HTMLInputElement | null
+  if (!field) return
+
+  if (checkbox.checked) {
+    field.classList.add('visible')
+    field.required = true
+    field.focus()
+  } else {
+    field.classList.remove('visible')
+    field.required = false
+    field.value = ''
+  }
+}
+
+function handleVisitDetails(event: Event) {
+  const sel = event.target as HTMLSelectElement
+  const cityField = document.getElementById('visit-city-field') as HTMLInputElement | null
+  const churchField = document.getElementById('visit-church-field') as HTMLInputElement | null
+
+  cityField?.classList.remove('visible')
+  churchField?.classList.remove('visible')
+  
+  if (cityField) cityField.required = false
+  if (churchField) churchField.required = false
+
+  if (sel.value === 'another-place') {
+    cityField?.classList.add('visible')
+    if (cityField) cityField.required = true
+  }
+
+  if (sel.value === 'another-church') {
+    churchField?.classList.add('visible')
+    if (churchField) churchField.required = true
+  }
+}
+
+function handleSocialInput(event: Event, platform: string) {
+  const input = event.target as HTMLInputElement;
+  let value = input.value.trim();
+  
+  // For Instagram and TikTok, remove @ if user types it at the beginning
+  if (platform !== 'facebook' && value.startsWith('@')) {
+    value = value.substring(1);
+    input.value = value;
+  }
+  // Facebook accepts everything as-is (URLs, @handles, plain names)
+}
+
 function clear() {
   // TODO:
 }
@@ -113,15 +195,16 @@ function clear() {
       <div class="two-col">
         <div class="card" id="capture-form-card">
           <div class="capture-header">✝ New Visitor / Capture Form</div>
+          <form @submit.prevent="captureAndShowWheel" :class="{ 'form-submitted': formSubmitted }">
           <div class="form-grid">
             <!-- Name -->
             <div class="form-group">
-              <label>First Name</label>
-              <input type="text" placeholder="First name" />
+              <label>First Name <span class="required">*</span></label>
+              <input type="text" placeholder="First name" required style="text-transform: capitalize;"/>
             </div>
             <div class="form-group">
-              <label>Last Name</label>
-              <input type="text" placeholder="Last name" />
+              <label>Last Name <span class="required">*</span></label>
+              <input type="text" placeholder="Last name" required style="text-transform: capitalize;"/>
             </div>
 
             <!-- Contact -->
@@ -134,23 +217,24 @@ function clear() {
               <input type="email" placeholder="email@example.com" />
             </div>
             <div class="form-group form-full">
-              <label>Address</label>
-              <input type="text" placeholder="Street address, City, ZIP" />
+              <label>Address <span class="required">*</span></label>
+              <input type="text" placeholder="Street address, City, ZIP" required style="text-transform: capitalize;"/>
             </div>
 
             <!-- Civil Status -->
             <div class="form-group form-full">
-              <label>Civil Status</label>
+              <label>Civil Status <span class="required">*</span></label>
               <div class="civil-status-label">
                 <label class="radio-pill">
-                  <input type="radio" name="civil-status" value="Single" />
+                  <input type="radio" name="civil-status" value="Single" @change="civilStatusError = false" />
                   <span>💍 Single</span>
                 </label>
                 <label class="radio-pill">
-                  <input type="radio" name="civil-status" value="Married" />
+                  <input type="radio" name="civil-status" value="Married" @change="civilStatusError = false" />
                   <span>👫 Married</span>
                 </label>
               </div>
+              <span v-if="civilStatusError" class="error-message">Please select your civil status</span>
             </div>
 
             <!-- Social Media -->
@@ -159,29 +243,32 @@ function clear() {
               <div class="soc-med-label">
                 <div>
                   <label class="checkbox-item"><input type="checkbox" id="sm-fb"
-                      onchange="toggleSocialField('fb-field', this)" />
+                       @change="toggleSocialField('fb-field', $event)" />
                     <span>📘 Facebook</span></label>
-                  <input type="text" id="fb-field" class="social-field" placeholder="Your Facebook name or @handle" />
+                  <input type="text" id="fb-field" class="social-field" placeholder="Your Facebook name or profile URL"
+                         @input="handleSocialInput($event, 'facebook')" />
                 </div>
                 <div>
                   <label class="checkbox-item"><input type="checkbox" id="sm-ig"
-                      onchange="toggleSocialField('ig-field', this)" />
+                       @change="toggleSocialField('ig-field', $event)" />
                     <span>📸 Instagram</span></label>
-                  <input type="text" id="ig-field" class="social-field" placeholder="Your Instagram @username" />
+                  <input type="text" id="ig-field" class="social-field" placeholder="Your Instagram username"
+                         @input="handleSocialInput($event, 'instagram')" />
                 </div>
                 <div>
                   <label class="checkbox-item"><input type="checkbox" id="sm-tt"
-                      onchange="toggleSocialField('tt-field', this)" />
+                      @change="toggleSocialField('tt-field', $event)" />
                     <span>🎵 TikTok</span></label>
-                  <input type="text" id="tt-field" class="social-field" placeholder="Your TikTok @username" />
+                  <input type="text" id="tt-field" class="social-field" placeholder="Your TikTok username"
+                         @input="handleSocialInput($event, 'tiktok')" />
                 </div>
               </div>
             </div>
 
             <!-- Visit Details -->
             <div class="form-group form-full">
-              <label>Visit Details</label>
-              <select id="visit-details-select" onchange="handleVisitDetails(this)">
+              <label>Visit Details <span class="required">*</span></label>
+              <select id="visit-details-select" required @change="handleVisitDetails($event)">
                 <option value="">Select...</option>
                 <option value="first">First Time Visitor</option>
                 <option value="returning">Returning Visitor</option>
@@ -195,8 +282,8 @@ function clear() {
 
             <!-- How did you hear -->
             <div class="form-group">
-              <label>How did you hear about us?</label>
-              <select>
+              <label>How did you hear about us? <span class="required">*</span></label>
+              <select required>
                 <option value="">Select...</option>
                 <option>Friend / Family</option>
                 <option>Social Media</option>
@@ -208,8 +295,8 @@ function clear() {
 
             <!-- Visit Date -->
             <div class="form-group">
-              <label>Visit Date</label>
-              <input type="date" value="2026-05-08" />
+              <label>Visit Date <span class="required">*</span></label>
+              <input type="date" :value="currentDate" required />
             </div>
 
             <!-- Interested In -->
@@ -267,11 +354,12 @@ function clear() {
             </div>
           </div>
           <div class="capture-visitor">
-            <button class="btn btn-primary" @click="captureAndShowWheel">
+            <button type="submit" class="btn btn-primary">
               💾 Capture Visitor
             </button>
-            <button class="btn btn-outline" @click="clear">Clear</button>
+            <button type="button" class="btn btn-outline" @click="clear">Clear</button>
           </div>
+          </form>
         </div>
 
         <div>
