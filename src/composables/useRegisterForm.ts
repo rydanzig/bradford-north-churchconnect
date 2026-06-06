@@ -7,6 +7,9 @@ export function useRegisterForm() {
   const formSubmitted = ref(false)
   const civilStatusError = ref(false)
   const ministryInterestError = ref(false)
+  const mobileNumberError = ref(false)
+  const emailError = ref(false)
+  const emailErrorMessage = ref('')
 
   // Get current date in YYYY-MM-DD format
   const currentDate = computed(() => {
@@ -40,6 +43,45 @@ export function useRegisterForm() {
     }
     
     civilStatusError.value = false
+    
+    // Custom validation for mobile number
+    const mobileInput = formElement.querySelector('input[type="tel"]') as HTMLInputElement | null
+    const mobileValue = mobileInput?.value.trim() || ''
+    
+    if (mobileValue) {
+      // Validate format: must be 09XXXXXXXXX (11 digits starting with 09)
+      const mobileRegex = /^09\d{9}$/
+      if (!mobileRegex.test(mobileValue)) {
+        mobileNumberError.value = true
+        mobileInput?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        return
+      }
+    }
+    
+    mobileNumberError.value = false
+    
+    // Custom validation for email
+    const emailInput = formElement.querySelector('input[type="email"]') as HTMLInputElement | null
+    const emailValue = emailInput?.value.trim() || ''
+    
+    if (emailValue) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(emailValue)) {
+        emailError.value = true
+        emailErrorMessage.value = 'Invalid email format'
+        emailInput?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        return
+      }
+      if (emailValue.length > 150) {
+        emailError.value = true
+        emailErrorMessage.value = 'Email must not exceed 150 characters'
+        emailInput?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        return
+      }
+    }
+    
+    emailError.value = false
+    emailErrorMessage.value = ''
     
     // Custom validation for ministry interest
     const servingMinistryCheckbox = formElement.querySelector('input[value="Serving in Ministry"]') as HTMLInputElement | null
@@ -165,7 +207,7 @@ export function useRegisterForm() {
 
         ws.style.display = 'block'
         ws.scrollIntoView({ behavior: 'smooth', block: 'center' })
-
+        
         drawWheel(wheelAngle)
       }, 450)
 
@@ -227,6 +269,28 @@ export function useRegisterForm() {
     // Facebook accepts everything as-is (URLs, @handles, plain names)
   }
 
+  function handleMobileInput(event: Event): void {
+    const input = event.target as HTMLInputElement
+    // Clear error when user starts typing
+    mobileNumberError.value = false
+    
+    // Remove non-numeric characters
+    let value = input.value.replace(/\D/g, '')
+    
+    // Limit to 11 digits
+    if (value.length > 11) {
+      value = value.substring(0, 11)
+    }
+    
+    input.value = value
+  }
+
+  function handleEmailInput(): void {
+    // Clear error when user starts typing
+    emailError.value = false
+    emailErrorMessage.value = ''
+  }
+
   function toggleMinistrySection(checkbox: HTMLInputElement) {
     const ministrySection = document.getElementById('ministry-interest-section')
     if (!ministrySection) return
@@ -242,6 +306,9 @@ export function useRegisterForm() {
     // Reset form submitted state
     formSubmitted.value = false
     civilStatusError.value = false
+    mobileNumberError.value = false
+    emailError.value = false
+    emailErrorMessage.value = ''
     
     // Get the form element
     const form = document.querySelector('#capture-form-card form') as HTMLFormElement | null
@@ -352,19 +419,185 @@ export function useRegisterForm() {
     })
   }
 
+  function spinWheel(): void {
+    if (isSpinning) return;
+    isSpinning = true;
+    
+    const spinBtn = document.getElementById('spin-btn') as HTMLButtonElement | null;
+    const spinResult = document.getElementById('spin-result') as HTMLElement | null;
+    
+    if (spinBtn) spinBtn.disabled = true;
+    if (spinResult) spinResult.style.display = 'none';
+
+    const winIndex: number = Math.floor(Math.random() * NUM);
+    // Extra full rotations (5-8) + land on winner
+    const extraSpins: number = (5 + Math.floor(Math.random() * 4)) * 2 * Math.PI;
+    const targetAngle: number = wheelAngle - (winIndex * ARC + ARC / 2) + extraSpins;
+    // Normalize so pointer (top = -PI/2) lands on slice center
+    const finalAngle: number = targetAngle - Math.PI / 2;
+
+    const duration: number = 4200;
+    const startTime: number = performance.now();
+    const startAngle: number = wheelAngle;
+
+    function easeOut(t: number): number {
+      return 1 - Math.pow(1 - t, 4);
+    }
+
+    function animate(now: number): void {
+      const elapsed: number = now - startTime;
+      const t: number = Math.min(elapsed / duration, 1);
+      wheelAngle = startAngle + (finalAngle - startAngle) * easeOut(t);
+      drawWheel(wheelAngle);
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        isSpinning = false;
+        showWinResult(winIndex);
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  function showWinResult(index: number): void {
+    const prize = wheelPrizes[index];
+    if (!prize) return;
+    
+    const spinResultIcon = document.getElementById('spin-result-icon') as HTMLElement | null;
+    const spinResultText = document.getElementById('spin-result-text') as HTMLElement | null;
+    const spinResult = document.getElementById('spin-result') as HTMLElement | null;
+    
+    if (spinResultIcon) spinResultIcon.textContent = prize.emoji;
+    if (spinResultText) spinResultText.textContent = 'You won a ' + prize.label + '!';
+    if (spinResult) spinResult.style.display = 'block';
+    
+    launchConfetti();
+    
+    setTimeout(() => {
+      const spinBtn = document.getElementById('spin-btn') as HTMLButtonElement | null;
+      if (spinBtn) {
+        spinBtn.disabled = false;
+        spinBtn.textContent = '🎯 Spin Again!';
+      }
+    }, 2500);
+  }
+
+  interface ConfettiPiece {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    color: string;
+    shape: 'rect' | 'circle' | 'ribbon';
+    vx: number;
+    vy: number;
+    angle: number;
+    spin: number;
+    opacity: number;
+  }
+
+  function launchConfetti(): void {
+    const canvas = document.getElementById('confetti-canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const pieces: ConfettiPiece[] = [];
+    const COLORS: string[] = [
+      '#4a9fc7',
+      '#c9a96e',
+      '#4caf7d',
+      '#e05555',
+      '#9b59b6',
+      '#f39c12',
+      '#1abc9c',
+      '#e74c3c',
+    ];
+    const SHAPES: Array<'rect' | 'circle' | 'ribbon'> = ['rect', 'circle', 'ribbon'];
+
+    for (let i = 0; i < 160; i++) {
+      pieces.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * -canvas.height,
+        w: 6 + Math.random() * 10,
+        h: 4 + Math.random() * 6,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)] || '#4a9fc7',
+        shape: SHAPES[Math.floor(Math.random() * SHAPES.length)] || 'rect',
+        vx: (Math.random() - 0.5) * 3,
+        vy: 2 + Math.random() * 4,
+        angle: Math.random() * 360,
+        spin: (Math.random() - 0.5) * 6,
+        opacity: 1,
+      });
+    }
+
+    let frame: number = 0;
+    
+    function animateConfetti(): void {
+      if (!ctx || !canvas) return;
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      frame++;
+      let alive: boolean = false;
+      
+      pieces.forEach((p: ConfettiPiece) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.angle += p.spin;
+        if (frame > 90) p.opacity -= 0.012;
+        if (p.opacity <= 0 || p.y > canvas.height + 20) return;
+        alive = true;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.angle * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        if (p.shape === 'rect') {
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        } else if (p.shape === 'circle') {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(-p.w / 2, 0);
+          ctx.quadraticCurveTo(0, -p.h, p.w / 2, 0);
+          ctx.quadraticCurveTo(0, p.h, -p.w / 2, 0);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+      
+      if (alive) requestAnimationFrame(animateConfetti);
+      else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    requestAnimationFrame(animateConfetti);
+  }
+
   return {
     formSubmitted,
     civilStatusError,
     ministryInterestError,
+    mobileNumberError,
+    emailError,
+    emailErrorMessage,
     currentDate,
     captureAndShowWheel,
     toggleSocialField,
     handleVisitDetails,
     handleSocialInput,
+    handleMobileInput,
+    handleEmailInput,
     toggleMinistrySection,
     clear,
     wheelPrizes,
-    drawWheel
+    drawWheel,
+    spinWheel
   }
 }
 

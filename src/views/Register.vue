@@ -5,16 +5,23 @@ const {
   formSubmitted,
   civilStatusError,
   ministryInterestError,
+  mobileNumberError,
+  emailError,
+  emailErrorMessage,
   currentDate,
   captureAndShowWheel,
   toggleSocialField,
   handleVisitDetails,
   handleSocialInput,
+  handleMobileInput,
+  handleEmailInput,
   toggleMinistrySection,
-  clear
+  clear,
+  spinWheel
 } = useRegisterForm()
 </script>
 <template>
+  <canvas id="confetti-canvas"></canvas>
   <div class="page active" id="page-admin">
     <div class="tabs">
       <button class="tab-btn active" id="admin-tab-capture">📋 Capture</button>
@@ -32,21 +39,33 @@ const {
             <!-- Name -->
             <div class="form-group">
               <label>First Name <span class="required">*</span></label>
-              <input type="text" placeholder="First name" required style="text-transform: capitalize;"/>
+              <input type="text" placeholder="First name" required style="text-transform: capitalize;" maxlength="100"/>
             </div>
             <div class="form-group">
               <label>Last Name <span class="required">*</span></label>
-              <input type="text" placeholder="Last name" required style="text-transform: capitalize;"/>
+              <input type="text" placeholder="Last name" required style="text-transform: capitalize;" maxlength="100"/>
             </div>
 
             <!-- Contact -->
             <div class="form-group form-full">
               <label>Phone Number</label>
-              <input type="tel" placeholder="09XXXXXXXXX (11 digits)" />
+              <input
+                type="tel"
+                placeholder="09XXXXXXXXX (11 digits)"
+                @input="handleMobileInput"
+                maxlength="11"
+              />
+              <span v-if="mobileNumberError" class="error-message">Mobile number must be in format 09XXXXXXXXX (11 digits)</span>
             </div>
             <div class="form-group form-full">
               <label>Email Address</label>
-              <input type="email" placeholder="email@example.com" />
+              <input
+                type="email"
+                placeholder="email@example.com"
+                @input="handleEmailInput"
+                maxlength="150"
+              />
+              <span v-if="emailError" class="error-message">{{ emailErrorMessage }}</span>
             </div>
             <div class="form-group form-full">
               <label>Address <span class="required">*</span></label>
@@ -209,12 +228,12 @@ const {
               <div class="wheel-wrapper">
                 <!-- Pointer -->
                 <div class="wheel-pointer">▼</div>
-                <canvas id="wheelCanvas" width="280" height="280" class="wheel-canvas"></canvas>
+                <canvas id="wheel-canvas" width="280" height="280" class="wheel-canvas"></canvas>
                 <!-- Center cap -->
                 <div class="wheel-center-cap">✝</div>
               </div>
               <div>
-                <button id="spin-btn" class="btn btn-gold spin-btn" onclick="spinWheel()">
+                <button id="spin-btn" class="btn btn-gold spin-btn" @click="spinWheel">
                   🎯 Spin to Win!
                 </button>
               </div>
