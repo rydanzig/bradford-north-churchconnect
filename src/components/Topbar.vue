@@ -6,8 +6,8 @@
         </div>
         <div class="topbar-nav">
             <router-link to="/"><button >🏠 Home</button></router-link>
-            <router-link to="/about"><button >🏠 About</button></router-link>
-            <button onclick="showPage('members',this)">👤 List</button>
+            <!-- <router-link to="/about"><button >🏠 About</button></router-link> -->
+            <router-link to="/members"><button >👤 List</button></router-link>
             <button onclick="showPage('attendance',this)" style="display:none;">📊 Attendance</button>
             <button onclick="showPage('admin',this)" style="display:none;">⚙️ Admin Tools</button>
         </div>

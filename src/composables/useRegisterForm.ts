@@ -168,7 +168,9 @@ export function useRegisterForm() {
       prayer_request: (formElement.querySelector('textarea') as HTMLTextAreaElement)?.value || '',
       origin_city_country: (document.getElementById('visit-city-field') as HTMLInputElement)?.value || '',
       church_name: (document.getElementById('visit-church-field') as HTMLInputElement)?.value || '',
-      serving_in_ministry: JSON.stringify(servingInMinistry)
+      serving_in_ministry: JSON.stringify(servingInMinistry),
+      membership_type: 'Visitor', // default value during registration
+      status_type: 'visitor' // default value during registration
     }
 
     try {
