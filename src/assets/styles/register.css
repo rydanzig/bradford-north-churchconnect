@@ -1,11 +1,8 @@
 div.civil-status-label {
     display: flex;
-    gap: 20px;
-    margin-top: 6px;
-    padding: 10px;
-    border-left: 3px solid var(--red);
-    background-color: rgba(224, 85, 85, 0.03);
-    border-radius: 4px;
+    gap: 16px;
+    margin-top: 8px;
+    flex-wrap: wrap;
 }
 
 div.soc-med-label {
@@ -46,8 +43,52 @@ span.network-options {
     margin-bottom: 4px;
 }
 
+.field-row-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: center;
+}
+
+.field-row-pair .social-field {
+    margin-top: 0;
+}
+
+.social-media-row:not(:has(.social-field.visible)) .checkbox-item {
+    grid-column: 1 / -1;
+}
+
+.ministry-row {
+    display: flex;
+    flex-direction: column;
+}
+
 #ministry-interest-section {
     display: none;
+    margin-left: 28px;
+    margin-top: 6px;
+    padding: 10px 10px 10px 12px;
+    background: var(--sky-light);
+    border-radius: 8px;
+    border-left: 3px solid var(--sky);
+}
+
+#ministry-interest-section.visible {
+    display: block;
+}
+
+.ministry-interest-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+}
+
+.ministry-interest-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 span.prayer-request {
@@ -118,4 +159,333 @@ select:required:valid {
 .form-submitted select:required:focus:valid {
   border-color: var(--green);
   box-shadow: 0 0 0 3px rgba(76, 175, 125, 0.1);
+}
+
+/* ── REGISTER PAGE LAYOUT ─────────────────────────────────── */
+.register-page {
+  max-width: none;
+  width: 100%;
+  padding: 28px 40px 56px;
+  background: transparent;
+}
+
+.register-top-welcome {
+  margin-bottom: 24px;
+  padding: 24px 32px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--navy) 0%, #243a5e 100%);
+  box-shadow: 0 8px 32px rgba(26, 39, 68, 0.18);
+  border: 1px solid rgba(201, 169, 110, 0.25);
+  animation: fadeIn 0.35s ease;
+}
+
+.register-top-welcome__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.register-top-welcome__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(201, 169, 110, 0.15);
+  border: 1px solid rgba(201, 169, 110, 0.4);
+  color: var(--gold);
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.register-top-welcome__title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--gold);
+  margin: 0;
+  line-height: 1.15;
+}
+
+.register-top-welcome__text,
+.register-top-welcome__closing {
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0 0 14px;
+}
+
+.register-top-welcome__verse {
+  margin: 0 0 14px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--gold);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.5;
+}
+
+.register-top-welcome__closing {
+  margin-bottom: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.register-top-welcome__gift-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  padding: 14px 28px;
+  border-radius: 12px;
+}
+
+.register-tabs {
+  margin-bottom: 24px;
+  border-bottom-color: rgba(26, 39, 68, 0.1);
+}
+
+.register-tabs--hidden {
+  display: none;
+}
+
+.register-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.register-form-card {
+  width: 100%;
+  padding: 32px 36px 36px;
+  border-radius: 16px;
+  border: 1px solid rgba(26, 39, 68, 0.06);
+  box-shadow: 0 4px 24px rgba(26, 39, 68, 0.06);
+  background: var(--white);
+}
+
+.register-form-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.register-form-header__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+  color: var(--gold);
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.register-form-header__title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.register-form-header__subtitle {
+  font-size: 14px;
+  color: var(--gray-600);
+  margin: 4px 0 0;
+  letter-spacing: 0.3px;
+}
+
+.register-page .form-grid {
+  gap: 20px 24px;
+}
+
+.register-page .form-group label {
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  color: var(--navy);
+  opacity: 0.85;
+}
+
+.register-page .form-group input,
+.register-page .form-group select,
+.register-page .form-group textarea {
+  border-radius: 10px;
+  border-color: rgba(26, 39, 68, 0.12);
+  background: #fafbfc;
+  padding: 11px 14px;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.register-page .form-group input:focus,
+.register-page .form-group select:focus,
+.register-page .form-group textarea:focus {
+  background: var(--white);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.15);
+}
+
+.register-page input:required,
+.register-page select:required,
+.register-page textarea:required {
+  border-left: none;
+  background-color: #fafbfc;
+}
+
+.register-page input:required:valid,
+.register-page select:required:valid {
+  border-left: none;
+  background-color: #fafbfc;
+}
+
+.register-page .radio-pill {
+  border-radius: 999px;
+  border-color: rgba(26, 39, 68, 0.12);
+  padding: 9px 18px;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.register-page .radio-pill:has(input:checked) {
+  border-color: var(--gold);
+  background: rgba(201, 169, 110, 0.12);
+  color: var(--navy);
+}
+
+.register-page .checkbox-item {
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.register-page .capture-visitor {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--gray-200);
+  gap: 12px;
+}
+
+.register-submit-btn {
+  padding: 13px 28px;
+  font-size: 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+  box-shadow: 0 4px 14px rgba(26, 39, 68, 0.2);
+}
+
+.register-submit-btn:hover {
+  background: linear-gradient(135deg, var(--navy-mid), #2d4a6e);
+  transform: translateY(-1px);
+}
+
+.register-clear-btn {
+  border-radius: 10px;
+  border-color: rgba(26, 39, 68, 0.15);
+  color: var(--gray-600);
+}
+
+.register-wheel-panel {
+  max-width: 560px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.register-wheel-panel .wheel-card {
+  border-radius: 16px;
+  border: 1px solid rgba(26, 39, 68, 0.06);
+  box-shadow: 0 8px 32px rgba(26, 39, 68, 0.08);
+}
+
+.register-hidden-stats {
+  display: none;
+}
+
+.visit-details-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+  margin-top: 4px;
+}
+
+.visit-details-fields .visit-details-select {
+  width: 100%;
+}
+
+.visit-details-fields:not(:has(.visit-detail-field.visible)) .visit-details-select {
+  grid-column: 1 / -1;
+}
+
+.visit-details-extra {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.visit-detail-field {
+  display: none;
+  width: 100%;
+  margin-top: 0;
+}
+
+.visit-detail-field.visible {
+  display: block;
+}
+
+@media (max-width: 700px) {
+  .register-page {
+    padding: 16px 16px 40px;
+  }
+
+  .register-form-card {
+    padding: 22px 18px 24px;
+  }
+
+  .register-top-welcome {
+    padding: 20px 18px;
+  }
+
+  .register-top-welcome__title {
+    font-size: 24px;
+  }
+
+  .register-top-welcome__text,
+  .register-top-welcome__closing {
+    font-size: 14px;
+  }
+
+  .register-form-header__title {
+    font-size: 22px;
+  }
+
+  .register-page .capture-visitor {
+    flex-direction: column;
+  }
+
+  .register-submit-btn,
+  .register-clear-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .visit-details-fields,
+  .field-row-pair {
+    grid-template-columns: 1fr;
+  }
+
+  .visit-details-fields .visit-details-select,
+  .social-media-row:not(:has(.social-field.visible)) .checkbox-item {
+    grid-column: 1;
+  }
 }

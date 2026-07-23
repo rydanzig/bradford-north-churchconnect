@@ -1,7 +1,11 @@
 <template>
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('tab-view',this)">👁 View Member</button>
-        <button class="tab-btn" onclick="showTab('tab-update',this)">✏️ Update Member</button>
-        <button class="tab-btn" onclick="showTab('tab-new',this)">➕ Add New Member</button>
+    <div class="tabs members-tabs">
+        <button class="tab-btn active">👁 View Member</button>
     </div>
 </template>
+
+<style scoped>
+.members-tabs .tab-btn:not(.active) {
+    display: none;
+}
+</style>

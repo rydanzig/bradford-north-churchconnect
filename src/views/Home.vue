@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import Banner from '@/components/Banner.vue';
 import Welcome from '@/components/Welcome.vue';
 import MeetOurPastors from '@/components/MeetOurPastors.vue';
 import NeedToKnow from '@/components/NeedToKnow.vue';
@@ -44,16 +43,13 @@ function submitAskUs() {
 }
 </script>
 <template>
-    <Banner />
-    <div class="page active" id="page-home">
+    <div class="page active page-home" id="page-home">
         <Welcome />
-        <div style="display:flex;gap:14px;margin-bottom:24px;">
-            <button class="btn btn-primary" @click="openAskUs">💬 Ask Us</button>
-            <router-link to="/register"><button class="btn btn-gold">📋 Register My Visit</button></router-link>
+        <div class="home-hidden-sections" aria-hidden="true">
+            <MeetOurPastors />
+            <NeedToKnow />
+            <WelcomeMessage />
         </div>
-        <MeetOurPastors />
-        <NeedToKnow />
-        <WelcomeMessage />
     </div>
     <!-- ASK US MODAL -->
    <div class="modal-overlay" id="askus-overlay" @click="handleOverlayClick($event)">

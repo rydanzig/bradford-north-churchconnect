@@ -1,8 +1,10 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/toast'
 
 export function useRegisterForm() {
   const toast = useToastStore()
+  const router = useRouter()
   
   const formSubmitted = ref(false)
   const civilStatusError = ref(false)
@@ -10,6 +12,13 @@ export function useRegisterForm() {
   const mobileNumberError = ref(false)
   const emailError = ref(false)
   const emailErrorMessage = ref('')
+  const showWelcomeBanner = ref(false)
+  const visitorFirstName = ref('')
+  const showWheelModal = ref(false)
+  const showSpinResult = ref(false)
+  const prizeClaimed = ref(false)
+  const wonPrizeEmoji = ref('')
+  const wonPrizeLabel = ref('')
 
   // Get current date in YYYY-MM-DD format
   const currentDate = computed(() => {
@@ -18,14 +27,6 @@ export function useRegisterForm() {
     const month = String(today.getMonth() + 1).padStart(2, '0')
     const day = String(today.getDate()).padStart(2, '0')
     return `${year}-${month}-${day}`
-  })
-
-  onMounted(() => {
-    // hide the stats, member search and prayer request tabs
-    ;['admin-tab-stats', 'admin-tab-search', 'pr-tab-btn'].forEach(id => {
-      const el = document.getElementById(id)
-      if (el) el.style.display = 'none'
-    })
   })
 
   async function captureAndShowWheel(event: Event) {
@@ -169,8 +170,7 @@ export function useRegisterForm() {
       origin_city_country: (document.getElementById('visit-city-field') as HTMLInputElement)?.value || '',
       church_name: (document.getElementById('visit-church-field') as HTMLInputElement)?.value || '',
       serving_in_ministry: JSON.stringify(servingInMinistry),
-      membership_type: 'Visitor', // default value during registration
-      status_type: 'visitor' // default value during registration
+      status_type: 'visitor'
     }
 
     try {
@@ -190,30 +190,13 @@ export function useRegisterForm() {
         throw new Error(result.message || 'Failed to save member')
       }
 
-      // Success - show wheel
-      const form = document.getElementById('capture-form-card') as HTMLElement | null
+      const firstNameInput = formElement.querySelector('input[placeholder="First name"]') as HTMLInputElement | null
+      const capitalizedFirst = capitalizeName(firstNameInput?.value || payload.first_name)
+      visitorFirstName.value = capitalizedFirst.split(' ')[0] ?? capitalizedFirst
+      showWelcomeBanner.value = true
 
-      if (form) {
-        form.style.transition = 'opacity 0.4s ease'
-        form.style.opacity = '0'
-
-        setTimeout(() => {
-          form.style.display = 'none'
-        }, 400)
-      }
-
-      const ws = document.getElementById('wheel-section') as HTMLElement | null
-
-      setTimeout(() => {
-        if (!ws) return
-
-        ws.style.display = 'block'
-        ws.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        
-        drawWheel(wheelAngle)
-      }, 450)
-
-      toast.showToast('Visitor captured! Spin to win your gift 🎉', false)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      toast.showToast('Visit registered successfully! 🎉', false)
     } catch (error: any) {
       toast.showToast(`Error: ${error.message}`, true)
       console.error('Error submitting form:', error)
@@ -293,14 +276,62 @@ export function useRegisterForm() {
     emailErrorMessage.value = ''
   }
 
+  function capitalizeName(name: string): string {
+    if (!name) return ''
+    return name
+      .trim()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
+  }
+
+  function handleFirstNameBlur(event: Event): void {
+    const input = event.target as HTMLInputElement
+    const capitalized = capitalizeName(input.value)
+    if (capitalized) {
+      input.value = capitalized
+    }
+  }
+
+  function openWheelModal(): void {
+    showWheelModal.value = true
+    showSpinResult.value = false
+    prizeClaimed.value = false
+    wonPrizeEmoji.value = ''
+    wonPrizeLabel.value = ''
+    isSpinning = false
+    wheelAngle = 0
+
+    nextTick(() => {
+      setupWheelCanvas()
+      drawWheel(wheelAngle)
+      const spinBtn = document.getElementById('spin-btn') as HTMLButtonElement | null
+      if (spinBtn) {
+        spinBtn.disabled = false
+        spinBtn.textContent = '🎯 Spin to Win!'
+      }
+    })
+  }
+
+  function claimPrizeAndGoHome(): void {
+    showWheelModal.value = false
+    showSpinResult.value = false
+    prizeClaimed.value = false
+    router.push('/')
+  }
+
   function toggleMinistrySection(checkbox: HTMLInputElement) {
     const ministrySection = document.getElementById('ministry-interest-section')
     if (!ministrySection) return
-    
+
     if (checkbox.checked) {
-      ministrySection.style.display = 'block'
+      ministrySection.classList.add('visible')
     } else {
-      ministrySection.style.display = 'none'
+      ministrySection.classList.remove('visible')
+      ministryInterestError.value = false
+      ministrySection.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+        ;(cb as HTMLInputElement).checked = false
+      })
     }
   }
 
@@ -311,6 +342,11 @@ export function useRegisterForm() {
     mobileNumberError.value = false
     emailError.value = false
     emailErrorMessage.value = ''
+    showWelcomeBanner.value = false
+    visitorFirstName.value = ''
+    showWheelModal.value = false
+    showSpinResult.value = false
+    prizeClaimed.value = false
     
     // Get the form element
     const form = document.querySelector('#capture-form-card form') as HTMLFormElement | null
@@ -358,11 +394,23 @@ export function useRegisterForm() {
     if (visitDateInput) {
       visitDateInput.value = currentDate.value
     }
-    
+
+    // Hide ministry interest panel
+    const ministrySection = document.getElementById('ministry-interest-section')
+    if (ministrySection) {
+      ministrySection.classList.remove('visible')
+      ministrySection.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+        ;(cb as HTMLInputElement).checked = false
+      })
+    }
+    ministryInterestError.value = false
+
     toast.showToast('Form cleared')
   }
 
   // ── SPIN WHEEL ─────────────────────────────────────────────
+  const WHEEL_DISPLAY_SIZE = 420
+
   const wheelPrizes = [
     { label: 'Notebook', emoji: '📓', color: '#4a9fc7' },
     { label: 'Pen', emoji: '🖊️', color: '#c9a96e' },
@@ -378,58 +426,81 @@ export function useRegisterForm() {
   let wheelAngle = 0
   let isSpinning = false
 
+  function setupWheelCanvas(): void {
+    const canvas = document.getElementById('wheel-canvas') as HTMLCanvasElement | null
+    if (!canvas) return
+
+    const dpr = window.devicePixelRatio || 1
+    const pixelSize = Math.floor(WHEEL_DISPLAY_SIZE * dpr)
+
+    canvas.style.width = `${WHEEL_DISPLAY_SIZE}px`
+    canvas.style.height = `${WHEEL_DISPLAY_SIZE}px`
+    canvas.width = pixelSize
+    canvas.height = pixelSize
+  }
+
   function drawWheel(angle: number) {
     const canvas = document.getElementById('wheel-canvas') as HTMLCanvasElement | null
 
     if (!canvas) return
 
-    const ctx = canvas.getContext('2d')
-    const cx = canvas.width / 2, cy = canvas.height / 2, r = cx - 4
+    if (!canvas.width) setupWheelCanvas()
 
+    const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    const dpr = window.devicePixelRatio || 1
+    const size = WHEEL_DISPLAY_SIZE
+    const cx = size / 2
+    const cy = size / 2
+    const r = cx - 10
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.clearRect(0, 0, size, size)
 
     wheelPrizes.forEach((prize, i) => {
       const start = angle + i * ARC
       const end = start + ARC
-      // Slice
       ctx.beginPath()
       ctx.moveTo(cx, cy)
       ctx.arc(cx, cy, r, start, end)
       ctx.closePath()
       ctx.fillStyle = prize.color
       ctx.fill()
-      ctx.strokeStyle = 'rgba(255,255,255,0.6)'
-      ctx.lineWidth = 2
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)'
+      ctx.lineWidth = 3
       ctx.stroke()
 
-      // Emoji + label
       ctx.save()
       ctx.translate(cx, cy)
       ctx.rotate(start + ARC / 2)
       ctx.textAlign = 'right'
-      // emoji
-      ctx.font = '22px serif'
+      ctx.font = '34px serif'
       ctx.fillStyle = '#fff'
-      ctx.fillText(prize.emoji, r - 10, 7)
-      // label
-      ctx.font = 'bold 11px Lato, sans-serif'
-      ctx.fillStyle = 'rgba(255,255,255,0.92)'
-      ctx.fillText(prize.label, r - 36, 7)
+      ctx.fillText(prize.emoji, r - 14, 10)
+      ctx.font = 'bold 15px Lato, sans-serif'
+      ctx.fillStyle = 'rgba(255,255,255,0.95)'
+      ctx.fillText(prize.label, r - 52, 10)
       ctx.restore()
     })
+
+    // Outer ring for crisp edge on high-DPI displays
+    ctx.beginPath()
+    ctx.arc(cx, cy, r, 0, Math.PI * 2)
+    ctx.strokeStyle = 'rgba(26, 39, 68, 0.2)'
+    ctx.lineWidth = 4
+    ctx.stroke()
   }
 
   function spinWheel(): void {
-    if (isSpinning) return;
-    isSpinning = true;
-    
-    const spinBtn = document.getElementById('spin-btn') as HTMLButtonElement | null;
-    const spinResult = document.getElementById('spin-result') as HTMLElement | null;
-    
-    if (spinBtn) spinBtn.disabled = true;
-    if (spinResult) spinResult.style.display = 'none';
+    if (isSpinning) return
+    isSpinning = true
+
+    const spinBtn = document.getElementById('spin-btn') as HTMLButtonElement | null
+
+    if (spinBtn) spinBtn.disabled = true
+    showSpinResult.value = false
+    prizeClaimed.value = false
 
     const winIndex: number = Math.floor(Math.random() * NUM);
     // Extra full rotations (5-8) + land on winner
@@ -462,26 +533,15 @@ export function useRegisterForm() {
   }
 
   function showWinResult(index: number): void {
-    const prize = wheelPrizes[index];
-    if (!prize) return;
-    
-    const spinResultIcon = document.getElementById('spin-result-icon') as HTMLElement | null;
-    const spinResultText = document.getElementById('spin-result-text') as HTMLElement | null;
-    const spinResult = document.getElementById('spin-result') as HTMLElement | null;
-    
-    if (spinResultIcon) spinResultIcon.textContent = prize.emoji;
-    if (spinResultText) spinResultText.textContent = 'You won a ' + prize.label + '!';
-    if (spinResult) spinResult.style.display = 'block';
-    
-    launchConfetti();
-    
-    setTimeout(() => {
-      const spinBtn = document.getElementById('spin-btn') as HTMLButtonElement | null;
-      if (spinBtn) {
-        spinBtn.disabled = false;
-        spinBtn.textContent = '🎯 Spin Again!';
-      }
-    }, 2500);
+    const prize = wheelPrizes[index]
+    if (!prize) return
+
+    wonPrizeEmoji.value = prize.emoji
+    wonPrizeLabel.value = prize.label
+    showSpinResult.value = true
+    prizeClaimed.value = true
+
+    launchConfetti()
   }
 
   interface ConfettiPiece {
@@ -589,12 +649,22 @@ export function useRegisterForm() {
     emailError,
     emailErrorMessage,
     currentDate,
+    showWelcomeBanner,
+    visitorFirstName,
+    showWheelModal,
+    showSpinResult,
+    prizeClaimed,
+    wonPrizeEmoji,
+    wonPrizeLabel,
     captureAndShowWheel,
     toggleSocialField,
     handleVisitDetails,
     handleSocialInput,
     handleMobileInput,
     handleEmailInput,
+    handleFirstNameBlur,
+    openWheelModal,
+    claimPrizeAndGoHome,
     toggleMinistrySection,
     clear,
     wheelPrizes,
