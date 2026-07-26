@@ -412,14 +412,12 @@ export function useRegisterForm() {
   const WHEEL_DISPLAY_SIZE = 420
 
   const wheelPrizes = [
-    { label: 'Notebook', emoji: '📓', color: '#4a9fc7' },
+    { label: 'Mug', emoji: '☕', color: '#4a9fc7' },
     { label: 'Pen', emoji: '🖊️', color: '#c9a96e' },
-    { label: 'Pencil', emoji: '✏️', color: '#4caf7d' },
-    { label: 'Bookmark', emoji: '🔖', color: '#9b59b6' },
-    { label: 'Candy', emoji: '🍬', color: '#e05555' },
-    { label: 'Notebook', emoji: '📓', color: '#1a9fc7' },
-    { label: 'Pen', emoji: '🖊️', color: '#e8a030' },
-    { label: 'Candy', emoji: '🍬', color: '#e07755' },
+    { label: 'Umbrella', emoji: '☂️', color: '#4caf7d' },
+    { label: 'Tote Bag', emoji: '👜', color: '#9b59b6' },
+    { label: 'Keychain', emoji: '🔑', color: '#e05555' },
+    { label: 'Candy', emoji: '🍬', color: '#e8a030' },
   ]
   const NUM = wheelPrizes.length
   const ARC = (2 * Math.PI) / NUM
