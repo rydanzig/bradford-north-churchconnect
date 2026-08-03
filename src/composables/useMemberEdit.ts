@@ -1,7 +1,13 @@
 import { ref, computed } from 'vue'
 import type { Member, MemberEditForm, SocialMediaEntry } from '@/types/member'
-import { MINISTRY_OPTIONS, SERVING_IN_MINISTRY_INTEREST } from '@/constants/memberFormOptions'
+import {
+  HEARD_ABOUT_US_OPTIONS,
+  MINISTRY_OPTIONS,
+  SERVING_IN_MINISTRY_INTEREST,
+} from '@/constants/memberFormOptions'
 import { useToastStore } from '@/stores/toast'
+
+const STANDARD_HEARD_ABOUT_US = HEARD_ABOUT_US_OPTIONS.filter((option) => option !== 'Others')
 
 function parseJsonArray<T>(value: unknown): T[] {
   if (!value) return []
@@ -41,6 +47,8 @@ function emptyForm(): MemberEditForm {
     email: '',
     address: '',
     heard_about_us: 'Friend / Family',
+    heard_about_us_choice: 'Friend / Family',
+    heard_about_us_specify: '',
     membership_type: '',
     household_name: '',
     prayer_request: '',
@@ -62,6 +70,22 @@ function emptyForm(): MemberEditForm {
     origin_city_country: '',
     church_name: '',
     serving_in_ministry: [],
+  }
+}
+
+function resolveHeardAboutUsFields(heardAboutUs: string | null | undefined) {
+  const value = heardAboutUs ?? 'Friend / Family'
+  if ((STANDARD_HEARD_ABOUT_US as readonly string[]).includes(value)) {
+    return {
+      heard_about_us: value,
+      heard_about_us_choice: value,
+      heard_about_us_specify: '',
+    }
+  }
+  return {
+    heard_about_us: value,
+    heard_about_us_choice: 'Others',
+    heard_about_us_specify: value === 'Others' ? '' : value,
   }
 }
 
@@ -98,7 +122,7 @@ export function useMemberEdit(onSaved?: () => void) {
       mobile_number: member.mobile_number ?? '',
       email: member.email ?? '',
       address: member.address ?? '',
-      heard_about_us: member.heard_about_us ?? 'Friend / Family',
+      ...resolveHeardAboutUsFields(member.heard_about_us),
       membership_type: member.membership_type ?? '',
       household_name: member.household_name ?? '',
       prayer_request: member.prayer_request ?? '',
@@ -121,6 +145,19 @@ export function useMemberEdit(onSaved?: () => void) {
       church_name: member.church_name ?? '',
       serving_in_ministry: servingValues,
     }
+  }
+
+  function onHeardAboutUsChoiceChange() {
+    if (form.value.heard_about_us_choice !== 'Others') {
+      form.value.heard_about_us_specify = ''
+    }
+  }
+
+  function resolvedHeardAboutUs() {
+    if (form.value.heard_about_us_choice === 'Others') {
+      return form.value.heard_about_us_specify.trim()
+    }
+    return form.value.heard_about_us_choice
   }
 
   async function openEdit(id: string) {
@@ -196,6 +233,17 @@ export function useMemberEdit(onSaved?: () => void) {
         }
       })
 
+      const heardAboutUs = resolvedHeardAboutUs()
+      if (!heardAboutUs) {
+        toast.showToast(
+          form.value.heard_about_us_choice === 'Others'
+            ? 'Please specify how you heard about us'
+            : 'Heard about us is required',
+          true,
+        )
+        return
+      }
+
       const payload = {
         first_name: form.value.first_name,
         middle_name: form.value.middle_name || null,
@@ -208,7 +256,7 @@ export function useMemberEdit(onSaved?: () => void) {
         mobile_number: form.value.mobile_number || null,
         email: form.value.email || null,
         address: form.value.address,
-        heard_about_us: form.value.heard_about_us,
+        heard_about_us: heardAboutUs,
         membership_type: form.value.membership_type || null,
         household_name: form.value.household_name || null,
         prayer_request: form.value.prayer_request || null,
@@ -265,6 +313,7 @@ export function useMemberEdit(onSaved?: () => void) {
     toggleInterest,
     toggleMinistry,
     handleMobileInput,
+    onHeardAboutUsChoiceChange,
     saveMember,
   }
 }

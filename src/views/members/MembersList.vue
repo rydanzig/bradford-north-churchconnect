@@ -50,6 +50,7 @@ const {
   toggleInterest,
   toggleMinistry,
   handleMobileInput,
+  onHeardAboutUsChoiceChange,
   saveMember,
 } = useMemberEdit(() => fetchMembers())
 
@@ -356,6 +357,7 @@ function isCompleted(status: string | null): boolean {
       @toggle-interest="toggleInterest"
       @toggle-ministry="toggleMinistry"
       @mobile-input="handleMobileInput"
+      @heard-about-us-change="onHeardAboutUsChoiceChange"
     />
 
     <ConfirmDeleteModal

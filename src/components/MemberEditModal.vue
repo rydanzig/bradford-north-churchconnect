@@ -26,6 +26,7 @@ const emit = defineEmits<{
   toggleInterest: [value: string]
   toggleMinistry: [value: string]
   mobileInput: [event: Event]
+  heardAboutUsChange: []
 }>()
 </script>
 
@@ -126,9 +127,18 @@ const emit = defineEmits<{
             </div>
             <div class="form-group">
               <label>Heard About Us</label>
-              <select v-model="form.heard_about_us">
+              <select v-model="form.heard_about_us_choice" @change="emit('heardAboutUsChange')">
                 <option v-for="option in HEARD_ABOUT_US_OPTIONS" :key="option" :value="option">{{ option }}</option>
               </select>
+              <input
+                v-if="form.heard_about_us_choice === 'Others'"
+                v-model="form.heard_about_us_specify"
+                type="text"
+                class="mt-8"
+                placeholder="Please specify"
+                required
+                maxlength="200"
+              />
             </div>
             <div class="form-group">
               <label>Membership Status</label>

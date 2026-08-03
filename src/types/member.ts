@@ -64,6 +64,8 @@ export interface MemberEditForm {
   email: string
   address: string
   heard_about_us: string
+  heard_about_us_choice: string
+  heard_about_us_specify: string
   membership_type: string
   household_name: string
   prayer_request: string

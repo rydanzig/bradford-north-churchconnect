@@ -4,6 +4,7 @@ import { useRegisterForm } from '@/composables/useRegisterForm'
 const {
   formSubmitted,
   civilStatusError,
+  heardAboutUsSpecifyError,
   ministryInterestError,
   mobileNumberError,
   emailError,
@@ -18,6 +19,7 @@ const {
   currentDate,
   captureAndShowWheel,
   toggleSocialField,
+  handleHeardAboutUsChange,
   handleVisitDetails,
   handleSocialInput,
   handleMobileInput,
@@ -127,6 +129,10 @@ const {
                   <input type="radio" name="civil-status" value="Married" @change="civilStatusError = false" />
                   <span>👫 Married</span>
                 </label>
+                <label class="radio-pill">
+                  <input type="radio" name="civil-status" value="Widowed" @change="civilStatusError = false" />
+                  <span>🖤 Widowed</span>
+                </label>
               </div>
               <span v-if="civilStatusError" class="error-message">Please select your civil status</span>
             </div>
@@ -190,14 +196,22 @@ const {
             <!-- How did you hear -->
             <div class="form-group">
               <label>How did you hear about us? <span class="required">*</span></label>
-              <select required id="heard_about_us">
+              <select required id="heard_about_us" @change="handleHeardAboutUsChange">
                 <option value="">Select...</option>
                 <option>Friend / Family</option>
                 <option>Social Media</option>
                 <option>Website</option>
                 <option>Drive By</option>
                 <option>Community Event</option>
+                <option value="Others">Others</option>
               </select>
+              <input
+                type="text"
+                id="heard-about-us-specify"
+                class="social-field"
+                placeholder="Please specify"
+              />
+              <span v-if="heardAboutUsSpecifyError" class="error-message">Please specify how you heard about us</span>
             </div>
 
             <!-- Visit Date -->

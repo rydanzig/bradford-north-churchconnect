@@ -8,6 +8,7 @@ export function useRegisterForm() {
   
   const formSubmitted = ref(false)
   const civilStatusError = ref(false)
+  const heardAboutUsSpecifyError = ref(false)
   const ministryInterestError = ref(false)
   const mobileNumberError = ref(false)
   const emailError = ref(false)
@@ -44,6 +45,26 @@ export function useRegisterForm() {
     }
     
     civilStatusError.value = false
+
+    // Custom validation for "Others" heard about us
+    const heardAboutUsSelect = document.getElementById('heard_about_us') as HTMLSelectElement | null
+    const heardAboutUsSpecifyInput = document.getElementById('heard-about-us-specify') as HTMLInputElement | null
+    const heardAboutUsSpecifyValue = heardAboutUsSpecifyInput?.value.trim() || ''
+
+    if (heardAboutUsSelect?.value === 'Others') {
+      if (!heardAboutUsSpecifyValue) {
+        heardAboutUsSpecifyError.value = true
+        heardAboutUsSpecifyInput?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        return
+      }
+      if (heardAboutUsSpecifyValue.length > 200) {
+        heardAboutUsSpecifyError.value = true
+        toast.showToast('Heard about us must not exceed 200 characters', true)
+        return
+      }
+    }
+
+    heardAboutUsSpecifyError.value = false
     
     // Custom validation for mobile number
     const mobileInput = formElement.querySelector('input[type="tel"]') as HTMLInputElement | null
@@ -153,6 +174,12 @@ export function useRegisterForm() {
     const [year, month, day] = visitDateValue.split('-')
     const visitDate = `${month}-${day}-${year}`
     
+    const heardAboutUsSelectValue = (document.getElementById('heard_about_us') as HTMLSelectElement)?.value || ''
+    const heardAboutUs =
+      heardAboutUsSelectValue === 'Others'
+        ? ((document.getElementById('heard-about-us-specify') as HTMLInputElement)?.value.trim() || '')
+        : heardAboutUsSelectValue
+
     // Build request payload
     const payload = {
       first_name: (formElement.querySelector('input[placeholder="First name"]') as HTMLInputElement)?.value || '',
@@ -163,7 +190,7 @@ export function useRegisterForm() {
       civil_status: civilStatus,
       social_media: JSON.stringify(socialMedia),
       visit_details: visitDetails,
-      heard_about_us: (document.getElementById('heard_about_us') as HTMLSelectElement)?.value || '',
+      heard_about_us: heardAboutUs,
       visit_date: visitDate,
       interests: JSON.stringify(interests),
       prayer_request: (formElement.querySelector('textarea') as HTMLTextAreaElement)?.value || '',
@@ -200,6 +227,24 @@ export function useRegisterForm() {
     } catch (error: any) {
       toast.showToast(`Error: ${error.message}`, true)
       console.error('Error submitting form:', error)
+    }
+  }
+
+  function handleHeardAboutUsChange(event: Event) {
+    heardAboutUsSpecifyError.value = false
+
+    const select = event.target as HTMLSelectElement
+    const specifyField = document.getElementById('heard-about-us-specify') as HTMLInputElement | null
+    if (!specifyField) return
+
+    if (select.value === 'Others') {
+      specifyField.classList.add('visible')
+      specifyField.required = true
+      specifyField.focus()
+    } else {
+      specifyField.classList.remove('visible')
+      specifyField.required = false
+      specifyField.value = ''
     }
   }
 
@@ -339,6 +384,7 @@ export function useRegisterForm() {
     // Reset form submitted state
     formSubmitted.value = false
     civilStatusError.value = false
+    heardAboutUsSpecifyError.value = false
     mobileNumberError.value = false
     emailError.value = false
     emailErrorMessage.value = ''
@@ -354,6 +400,13 @@ export function useRegisterForm() {
     
     // Reset all form fields
     form.reset()
+
+    const heardAboutUsSpecify = document.getElementById('heard-about-us-specify') as HTMLInputElement | null
+    if (heardAboutUsSpecify) {
+      heardAboutUsSpecify.classList.remove('visible')
+      heardAboutUsSpecify.required = false
+      heardAboutUsSpecify.value = ''
+    }
     
     // Hide social media fields
     const socialFields = ['fb-field', 'ig-field', 'tt-field']
@@ -642,6 +695,7 @@ export function useRegisterForm() {
   return {
     formSubmitted,
     civilStatusError,
+    heardAboutUsSpecifyError,
     ministryInterestError,
     mobileNumberError,
     emailError,
@@ -656,6 +710,7 @@ export function useRegisterForm() {
     wonPrizeLabel,
     captureAndShowWheel,
     toggleSocialField,
+    handleHeardAboutUsChange,
     handleVisitDetails,
     handleSocialInput,
     handleMobileInput,

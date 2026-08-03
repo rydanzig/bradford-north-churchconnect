@@ -35,6 +35,7 @@ const {
   toggleInterest,
   toggleMinistry,
   handleMobileInput,
+  onHeardAboutUsChoiceChange,
   saveMember,
 } = useMemberEdit(() => refreshDashboard())
 
@@ -281,6 +282,7 @@ function handleMemberSelect(id: string) {
       @toggle-interest="toggleInterest"
       @toggle-ministry="toggleMinistry"
       @mobile-input="handleMobileInput"
+      @heard-about-us-change="onHeardAboutUsChoiceChange"
     />
   </div>
 </template>
